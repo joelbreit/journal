@@ -1,0 +1,238 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Journal App Backend Infrastructure
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs20.x
+    MemorySize: 256
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        BUCKET_NAME: !Ref JournalEntriesBucket
+    Tags:
+      Project: journal
+
+Parameters:
+  Stage:
+    Type: String
+    Default: prod
+    Description: API deployment stage
+
+Resources:
+  # S3 Bucket for storing markdown journal entries
+  JournalEntriesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'journal-entries-${AWS::AccountId}-${Stage}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Project
+          Value: journal
+
+  # Cognito User Pool
+  JournalUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub 'journal-users-${Stage}'
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+      UserPoolTags:
+        Project: journal
+
+  # Cognito User Pool Client
+  JournalUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub 'journal-web-client-${Stage}'
+      UserPoolId: !Ref JournalUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      PreventUserExistenceErrors: ENABLED
+
+  # Lambda Layer for common utilities
+  CommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: journal-common-layer
+      Description: Common utilities and AWS SDK for Journal app
+      ContentUri: src/layers/common/
+      CompatibleRuntimes:
+        - nodejs20.x
+      RetentionPolicy: Delete
+    Metadata:
+      BuildMethod: nodejs20.x
+
+  # API Gateway
+  JournalApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub 'journal-api-${Stage}'
+      StageName: !Ref Stage
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt JournalUserPool.Arn
+      Tags:
+        Project: journal
+
+  # Lambda Functions - Entries
+  CreateEntryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'journal-create-entry-${Stage}'
+      CodeUri: src/handlers/entries/
+      Handler: create.handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref JournalEntriesBucket
+      Events:
+        CreateEntry:
+          Type: Api
+          Properties:
+            RestApiId: !Ref JournalApi
+            Path: /entries
+            Method: post
+
+  ListEntriesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'journal-list-entries-${Stage}'
+      CodeUri: src/handlers/entries/
+      Handler: list.handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref JournalEntriesBucket
+      Events:
+        ListEntries:
+          Type: Api
+          Properties:
+            RestApiId: !Ref JournalApi
+            Path: /entries
+            Method: get
+
+  GetEntryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'journal-get-entry-${Stage}'
+      CodeUri: src/handlers/entries/
+      Handler: get.handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref JournalEntriesBucket
+      Events:
+        GetEntry:
+          Type: Api
+          Properties:
+            RestApiId: !Ref JournalApi
+            Path: /entries/{id}
+            Method: get
+
+  UpdateEntryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'journal-update-entry-${Stage}'
+      CodeUri: src/handlers/entries/
+      Handler: update.handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref JournalEntriesBucket
+      Events:
+        UpdateEntry:
+          Type: Api
+          Properties:
+            RestApiId: !Ref JournalApi
+            Path: /entries/{id}
+            Method: put
+
+  DeleteEntryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'journal-delete-entry-${Stage}'
+      CodeUri: src/handlers/entries/
+      Handler: delete.handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref JournalEntriesBucket
+      Events:
+        DeleteEntry:
+          Type: Api
+          Properties:
+            RestApiId: !Ref JournalApi
+            Path: /entries/{id}
+            Method: delete
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${JournalApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+    Export:
+      Name: !Sub "journal-api-endpoint-${Stage}"
+
+  UserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref JournalUserPool
+    Export:
+      Name: !Sub "journal-user-pool-id-${Stage}"
+
+  UserPoolClientId:
+    Description: "Cognito User Pool Client ID"
+    Value: !Ref JournalUserPoolClient
+    Export:
+      Name: !Sub "journal-user-pool-client-id-${Stage}"
+
+  BucketName:
+    Description: "S3 Bucket for journal entries"
+    Value: !Ref JournalEntriesBucket
+    Export:
+      Name: !Sub "journal-bucket-name-${Stage}"
+
+  Region:
+    Description: "AWS Region"
+    Value: !Ref AWS::Region
+    Export:
+      Name: !Sub "journal-region-${Stage}"

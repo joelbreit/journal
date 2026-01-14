@@ -1,0 +1,19 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "journal-app"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-YOUR-BUCKET-ID"
+s3_prefix = "journal-app"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=prod"
+confirm_changeset = true
+resolve_s3 = true
+
+[default.build]
+[default.build.parameters]
+use_container = false
+cached = true
+parallel = true
