@@ -1,7 +1,21 @@
 @import "tailwindcss";
 
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
+
 @layer base {
   body {
-    @apply m-0 min-h-screen;
+    @apply m-0 min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 text-amber-950;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Serif font for content/entries */
+  .font-serif {
+    font-family: 'Crimson Text', serif;
+  }
+
+  /* Sans-serif for UI elements (default) */
+  .font-sans {
+    font-family: 'Inter', sans-serif;
   }
 }
