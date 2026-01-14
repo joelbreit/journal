@@ -3,26 +3,26 @@
  * List all entries for the authenticated user (metadata only)
  */
 
+import { listEntries } from '../../layers/common/s3Client.js';
+import { getUserId } from '../../layers/common/auth.js';
+
 export const handler = async (event) => {
   console.log('List entries event:', JSON.stringify(event, null, 2));
 
   try {
-    // TODO: Extract user ID from Cognito JWT claims
-    // const userId = event.requestContext.authorizer.claims.sub;
+    const userId = getUserId(event);
 
-    // TODO: List objects from S3 at users/{userId}/
-    // TODO: Return metadata only (title, date, id, preview) - not full content
+    // Get all entries for user
+    const entries = await listEntries(userId);
 
+    // Return metadata only (no content)
     return {
-      statusCode: 501,
+      statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({
-        message: 'List entries - Not implemented yet',
-        entries: [],
-      }),
+      body: JSON.stringify(entries.map(e => e.toMetadata())),
     };
   } catch (error) {
     console.error('Error listing entries:', error);

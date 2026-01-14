@@ -3,31 +3,72 @@
  * Create a new journal entry
  */
 
+import { Entry } from '../../../../../shared/models/Entry.js';
+import { saveEntry } from '../../layers/common/s3Client.js';
+import { getUserId } from '../../layers/common/auth.js';
+
 export const handler = async (event) => {
   console.log('Create entry event:', JSON.stringify(event, null, 2));
 
   try {
-    // TODO: Extract user ID from Cognito JWT claims
-    // const userId = event.requestContext.authorizer.claims.sub;
+    const userId = getUserId(event);
+    const { title, content, date } = JSON.parse(event.body);
 
-    // TODO: Parse request body
-    // const { title, content, date } = JSON.parse(event.body);
+    // Validate required fields
+    if (!content || content.trim().length === 0) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          message: 'Content is required',
+        }),
+      };
+    }
 
-    // TODO: Generate unique entry ID
-    // const entryId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Generate unique entry ID
+    const entryId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    // TODO: Save to S3 at users/{userId}/{entryId}.md
-    // TODO: Store metadata in S3 object metadata (title, date, preview)
+    // Create Entry instance
+    const entry = new Entry({
+      id: entryId,
+      userId,
+      title: title || 'Untitled',
+      content,
+      date: date || new Date().toISOString(),
+    });
+
+    // Generate preview
+    entry.generatePreview();
+
+    // Validate entry
+    const validation = entry.validate();
+    if (!validation.isValid) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          message: 'Validation failed',
+          errors: validation.errors,
+        }),
+      };
+    }
+
+    // Save to S3
+    await saveEntry(entry);
 
     return {
-      statusCode: 501,
+      statusCode: 201,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({
-        message: 'Create entry - Not implemented yet',
-      }),
+      body: JSON.stringify(entry.toJSON()),
     };
   } catch (error) {
     console.error('Error creating entry:', error);

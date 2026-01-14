@@ -3,32 +3,57 @@
  * Get a specific entry with full markdown content
  */
 
+import { getEntry } from '../../layers/common/s3Client.js';
+import { getUserId } from '../../layers/common/auth.js';
+
 export const handler = async (event) => {
   console.log('Get entry event:', JSON.stringify(event, null, 2));
 
   try {
-    // TODO: Extract user ID from Cognito JWT claims
-    // const userId = event.requestContext.authorizer.claims.sub;
+    const userId = getUserId(event);
+    const entryId = event.pathParameters?.id;
 
-    // TODO: Get entry ID from path parameters
-    // const entryId = event.pathParameters.id;
+    if (!entryId) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          message: 'Entry ID is required',
+        }),
+      };
+    }
 
-    // TODO: Fetch from S3 at users/{userId}/{entryId}.md
-    // TODO: Verify user owns this entry
-    // TODO: Return full markdown content and metadata
+    // Get entry from S3
+    const entry = await getEntry(userId, entryId);
 
     return {
-      statusCode: 501,
+      statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({
-        message: 'Get entry - Not implemented yet',
-      }),
+      body: JSON.stringify(entry.toJSON()),
     };
   } catch (error) {
     console.error('Error getting entry:', error);
+
+    // Check if it's a not found error
+    if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
+      return {
+        statusCode: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          message: 'Entry not found',
+        }),
+      };
+    }
+
     return {
       statusCode: 500,
       headers: {

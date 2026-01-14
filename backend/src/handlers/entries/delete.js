@@ -3,28 +3,58 @@
  * Delete an entry
  */
 
+import { getEntry, deleteEntry } from '../../layers/common/s3Client.js';
+import { getUserId } from '../../layers/common/auth.js';
+
 export const handler = async (event) => {
   console.log('Delete entry event:', JSON.stringify(event, null, 2));
 
   try {
-    // TODO: Extract user ID from Cognito JWT claims
-    // const userId = event.requestContext.authorizer.claims.sub;
+    const userId = getUserId(event);
+    const entryId = event.pathParameters?.id;
 
-    // TODO: Get entry ID from path parameters
-    // const entryId = event.pathParameters.id;
+    if (!entryId) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          message: 'Entry ID is required',
+        }),
+      };
+    }
 
-    // TODO: Verify user owns this entry
-    // TODO: Delete from S3 at users/{userId}/{entryId}.md
+    // Check if entry exists and user owns it
+    try {
+      await getEntry(userId, entryId);
+    } catch (error) {
+      if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
+        return {
+          statusCode: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+          body: JSON.stringify({
+            message: 'Entry not found',
+          }),
+        };
+      }
+      throw error;
+    }
+
+    // Delete from S3
+    await deleteEntry(userId, entryId);
 
     return {
-      statusCode: 501,
+      statusCode: 204,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({
-        message: 'Delete entry - Not implemented yet',
-      }),
+      body: '',
     };
   } catch (error) {
     console.error('Error deleting entry:', error);
