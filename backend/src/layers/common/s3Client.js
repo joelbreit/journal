@@ -3,7 +3,7 @@
  * Handles all S3 operations for storing and retrieving journal entries
  */
 
-const { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
 const BUCKET_NAME = process.env.BUCKET_NAME;
@@ -65,7 +65,7 @@ async function deleteEntry(userId, entryId) {
   throw new Error('Not implemented yet');
 }
 
-module.exports = {
+export {
   saveEntry,
   getEntry,
   listEntries,

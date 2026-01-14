@@ -44,7 +44,7 @@ function getUserClaims(event) {
   return event.requestContext?.authorizer?.claims || {};
 }
 
-module.exports = {
+export {
   getUserId,
   getUserEmail,
   getUserClaims,

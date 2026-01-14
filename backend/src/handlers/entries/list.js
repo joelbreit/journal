@@ -3,7 +3,7 @@
  * List all entries for the authenticated user (metadata only)
  */
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   console.log('List entries event:', JSON.stringify(event, null, 2));
 
   try {

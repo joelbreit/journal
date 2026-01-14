@@ -3,7 +3,7 @@
  * Get a specific entry with full markdown content
  */
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   console.log('Get entry event:', JSON.stringify(event, null, 2));
 
   try {

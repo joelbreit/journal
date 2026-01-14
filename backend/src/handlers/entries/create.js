@@ -3,7 +3,7 @@
  * Create a new journal entry
  */
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   console.log('Create entry event:', JSON.stringify(event, null, 2));
 
   try {
