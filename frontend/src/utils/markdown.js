@@ -8,15 +8,15 @@ import { marked } from 'marked';
 
 // Configure Turndown for HTML -> Markdown conversion
 const turndownService = new TurndownService({
-  headingStyle: 'atx',
-  codeBlockStyle: 'fenced',
-  bulletListMarker: '-',
+	headingStyle: 'atx',
+	codeBlockStyle: 'fenced',
+	bulletListMarker: '-',
 });
 
 // Configure Marked for Markdown -> HTML conversion
 marked.setOptions({
-  breaks: true,
-  gfm: true,
+	breaks: true,
+	gfm: true,
 });
 
 /**
@@ -24,10 +24,10 @@ marked.setOptions({
  * Used when saving content from TipTap editor
  */
 export function htmlToMarkdown(html) {
-  if (!html || html.trim() === '<p></p>') {
-    return '';
-  }
-  return turndownService.turndown(html);
+	if (!html || html.trim() === '<p></p>') {
+		return '';
+	}
+	return turndownService.turndown(html);
 }
 
 /**
@@ -35,13 +35,13 @@ export function htmlToMarkdown(html) {
  * Used when loading content into TipTap editor
  */
 export function markdownToHtml(markdown) {
-  if (!markdown) {
-    return '<p></p>';
-  }
-  return marked.parse(markdown);
+	if (!markdown) {
+		return '<p></p>';
+	}
+	return marked.parse(markdown);
 }
 
 export default {
-  htmlToMarkdown,
-  markdownToHtml,
+	htmlToMarkdown,
+	markdownToHtml,
 };

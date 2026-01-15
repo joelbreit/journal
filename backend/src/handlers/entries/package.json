@@ -1,0 +1,7 @@
+{
+  "name": "journal-entries-handlers",
+  "version": "1.0.0",
+  "description": "Lambda handlers for journal entries",
+  "type": "module",
+  "main": "index.js"
+}

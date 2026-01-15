@@ -13,60 +13,66 @@ import { useEffect, useRef, useState } from 'react';
  * @returns {string} Status: 'saved' | 'pending' | 'saving' | 'error'
  */
 export function useAutoSave(content, saveFunction, delay = 5000) {
-  const [status, setStatus] = useState('saved');
-  const timeoutRef = useRef(null);
-  const previousContent = useRef(content);
-  const isMounted = useRef(true);
+	const [status, setStatus] = useState('saved');
+	const timeoutRef = useRef(null);
+	const previousContent = useRef(content);
+	const isMounted = useRef(true);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+	useEffect(() => {
+		console.log("[DEBUG] useEffect: useAutoSave mount/unmount tracking");
+		isMounted.current = true;
+		return () => {
+			isMounted.current = false;
+		};
+	}, []);
 
-  useEffect(() => {
-    // Clear existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+	useEffect(() => {
+		console.log("[DEBUG] useEffect: useAutoSave content change", { 
+			contentLength: content?.length, 
+			previousLength: previousContent.current?.length,
+			delay 
+		});
+		// Clear existing timeout
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+		}
 
-    // If content hasn't changed, don't save
-    if (content === previousContent.current) {
-      return;
-    }
+		// If content hasn't changed, don't save
+		if (content === previousContent.current) {
+			return;
+		}
 
-    // Mark as pending
-    setStatus('pending');
+		// Mark as pending
+		setStatus('pending');
 
-    // Set up debounced save
-    timeoutRef.current = setTimeout(async () => {
-      if (!isMounted.current) return;
+		// Set up debounced save
+		timeoutRef.current = setTimeout(async () => {
+			if (!isMounted.current) return;
 
-      setStatus('saving');
-      try {
-        await saveFunction(content);
-        if (isMounted.current) {
-          setStatus('saved');
-          previousContent.current = content;
-        }
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        if (isMounted.current) {
-          setStatus('error');
-        }
-      }
-    }, delay);
+			setStatus('saving');
+			try {
+				await saveFunction(content);
+				if (isMounted.current) {
+					setStatus('saved');
+					previousContent.current = content;
+				}
+			} catch (error) {
+				console.error('Auto-save failed:', error);
+				if (isMounted.current) {
+					setStatus('error');
+				}
+			}
+		}, delay);
 
-    // Cleanup on unmount
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [content, saveFunction, delay]);
+		// Cleanup on unmount
+		return () => {
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+		};
+	}, [content, saveFunction, delay]);
 
-  return status;
+	return status;
 }
 
 export default useAutoSave;

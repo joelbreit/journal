@@ -1,0 +1,6 @@
+{
+  "name": "journal-common-layer-root",
+  "version": "1.0.0",
+  "description": "Root package.json for SAM build process",
+  "type": "module"
+}

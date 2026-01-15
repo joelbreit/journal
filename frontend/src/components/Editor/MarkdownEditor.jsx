@@ -3,78 +3,87 @@
  * TipTap-based WYSIWYG editor for journal entries
  */
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
-import { htmlToMarkdown, markdownToHtml } from '../../utils/markdown';
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
+import { useEffect } from "react";
+import { htmlToMarkdown, markdownToHtml } from "../../utils/markdown";
 
-export function MarkdownEditor({ initialContent = '', onChange, placeholder = 'Start writing...' }) {
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-        },
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        orderedList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-rose-400 hover:text-rose-500 underline decoration-rose-200 hover:decoration-rose-300 transition-colors',
-        },
-      }),
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: 'is-editor-empty',
-      }),
-    ],
-    content: markdownToHtml(initialContent),
-    editorProps: {
-      attributes: {
-        class: 'prose prose-amber max-w-none focus:outline-none min-h-[300px] px-4 py-3',
-      },
-    },
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      const markdown = htmlToMarkdown(html);
-      onChange?.(markdown);
-    },
-  });
+export function MarkdownEditor({
+	initialContent = "",
+	onChange,
+	placeholder = "Start writing...",
+}) {
+	const editor = useEditor({
+		extensions: [
+			StarterKit.configure({
+				heading: {
+					levels: [1, 2, 3, 4, 5, 6],
+				},
+				bulletList: {
+					keepMarks: true,
+					keepAttributes: false,
+				},
+				orderedList: {
+					keepMarks: true,
+					keepAttributes: false,
+				},
+			}),
+			Link.configure({
+				openOnClick: false,
+				HTMLAttributes: {
+					class: "text-rose-400 hover:text-rose-500 underline decoration-rose-200 hover:decoration-rose-300 transition-colors",
+				},
+			}),
+			Placeholder.configure({
+				placeholder,
+				emptyEditorClass: "is-editor-empty",
+			}),
+		],
+		content: markdownToHtml(initialContent),
+		editorProps: {
+			attributes: {
+				class: "prose prose-amber max-w-none focus:outline-none min-h-[300px] px-4 py-3",
+			},
+		},
+		onUpdate: ({ editor }) => {
+			console.log("[DEBUG] MarkdownEditor onUpdate");
+			const html = editor.getHTML();
+			const markdown = htmlToMarkdown(html);
+			onChange?.(markdown);
+		},
+	});
 
-  // Update editor content when initialContent changes (for loading entries)
-  useEffect(() => {
-    if (editor && initialContent !== undefined) {
-      const html = markdownToHtml(initialContent);
-      const currentHtml = editor.getHTML();
+	// Update editor content when initialContent changes (for loading entries)
+	useEffect(() => {
+		console.log("[DEBUG] useEffect: MarkdownEditor content update", {
+			hasEditor: !!editor,
+			initialContentLength: initialContent?.length,
+		});
+		if (editor && initialContent !== undefined) {
+			const html = markdownToHtml(initialContent);
+			const currentHtml = editor.getHTML();
 
-      // Only update if content is different to avoid unnecessary rerenders
-      if (html !== currentHtml) {
-        editor.commands.setContent(html);
-      }
-    }
-  }, [initialContent, editor]);
+			// Only update if content is different to avoid unnecessary rerenders
+			if (html !== currentHtml) {
+				editor.commands.setContent(html);
+			}
+		}
+	}, [initialContent, editor]);
 
-  if (!editor) {
-    return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-amber-200 p-4">
-        <div className="text-amber-600 text-sm">Loading editor...</div>
-      </div>
-    );
-  }
+	if (!editor) {
+		return (
+			<div className="bg-white/80 backdrop-blur-sm rounded-xl border border-amber-200 p-4">
+				<div className="text-amber-600 text-sm">Loading editor...</div>
+			</div>
+		);
+	}
 
-  return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-amber-200 shadow-sm overflow-hidden">
-      <EditorContent editor={editor} />
-      <style>{`
+	return (
+		<div className="bg-white/80 backdrop-blur-sm rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+			<EditorContent editor={editor} />
+			<style>{`
         .ProseMirror {
           font-family: 'Crimson Text', serif;
         }
@@ -175,8 +184,8 @@ export function MarkdownEditor({ initialContent = '', onChange, placeholder = 'S
           outline: none;
         }
       `}</style>
-    </div>
-  );
+		</div>
+	);
 }
 
 export default MarkdownEditor;
