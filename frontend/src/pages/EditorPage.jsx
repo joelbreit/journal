@@ -24,7 +24,8 @@ import {
 export function EditorPage() {
 	const { id } = useParams();
 	const navigate = useNavigate();
-	const isNewEntry = id === "new";
+	// Check if id is undefined (route /entry/new) or explicitly "new"
+	const isNewEntry = !id || id === "new";
 
 	const debugNavigate = (path, options) => {
 		console.log("[DEBUG] useNavigate called:", { path, options });
@@ -34,6 +35,7 @@ export function EditorPage() {
 	const [entry, setEntry] = useState(null);
 	const [title, setTitle] = useState("");
 	const [content, setContent] = useState("");
+	const [editor, setEditor] = useState(null);
 	const [loading, setLoading] = useState(!isNewEntry);
 	const [error, setError] = useState(null);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -58,12 +60,8 @@ export function EditorPage() {
 
 					const savedEntry = await api.createEntry(newEntry);
 
-					// Update URL to the new entry ID without navigation
-					window.history.replaceState(
-						null,
-						"",
-						`/entry/${savedEntry.id}`
-					);
+					// Update URL to the new entry ID using navigate to update params
+					navigate(`/entry/${savedEntry.id}`, { replace: true });
 					setEntry(savedEntry);
 				} else {
 					// Update existing entry
@@ -92,8 +90,14 @@ export function EditorPage() {
 		console.log("[DEBUG] useEffect: EditorPage load entry", {
 			id,
 			isNewEntry,
+			hasEntry: !!entry,
+			entryId: entry?.id,
 		});
-		if (!isNewEntry) {
+		// Only load if:
+		// 1. Not a new entry
+		// 2. ID is defined
+		// 3. We don't already have this entry loaded
+		if (!isNewEntry && id && entry?.id !== id) {
 			loadEntry();
 		}
 	}, [id, isNewEntry]);
@@ -259,10 +263,11 @@ export function EditorPage() {
 
 					{/* Editor */}
 					<div className="bg-white/80 backdrop-blur-sm rounded-xl border border-amber-200 shadow-sm overflow-hidden">
-						<FormattingToolbar editor={content} />
+						<FormattingToolbar editor={editor} />
 						<MarkdownEditor
 							initialContent={content}
 							onChange={setContent}
+							onEditorReady={setEditor}
 							placeholder="Start writing your thoughts..."
 						/>
 					</div>

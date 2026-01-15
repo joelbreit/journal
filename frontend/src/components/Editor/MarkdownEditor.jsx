@@ -14,6 +14,7 @@ export function MarkdownEditor({
 	initialContent = "",
 	onChange,
 	placeholder = "Start writing...",
+	onEditorReady,
 }) {
 	const editor = useEditor({
 		extensions: [
@@ -54,6 +55,13 @@ export function MarkdownEditor({
 			onChange?.(markdown);
 		},
 	});
+
+	// Expose editor instance to parent component
+	useEffect(() => {
+		if (editor && onEditorReady) {
+			onEditorReady(editor);
+		}
+	}, [editor, onEditorReady]);
 
 	// Update editor content when initialContent changes (for loading entries)
 	useEffect(() => {

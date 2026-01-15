@@ -3,7 +3,7 @@
  * Update an existing entry (used by auto-save)
  */
 
-import { Entry } from '../../../../../shared/models/Entry.js';
+import { Entry } from '/opt/nodejs/Entry.js';
 import { getEntry, saveEntry } from '/opt/nodejs/s3Client.js';
 import { getUserId } from '/opt/nodejs/auth.js';
 

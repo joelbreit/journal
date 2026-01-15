@@ -1,27 +1,26 @@
 # Entry Class Usage Guide
 
-The `Entry` class is shared between frontend and backend, providing a consistent object-oriented interface for journal entries.
+The `Entry` class provides a consistent object-oriented interface for journal entries.
 
-## Location
+## Locations
 
-**Shared**: `/shared/models/Entry.js`
+- **Frontend**: `shared/models/Entry.js`
+- **Backend**: `backend/src/layers/common/Entry.js`
 
-Both frontend and backend import from this single source of truth.
+Both copies should be kept in sync when making changes.
 
 ## Importing
 
 ### Backend (Lambda)
 ```javascript
-import { Entry } from '/opt/nodejs/index.js';
-// or
-import { Entry } from '../../../../../shared/models/Entry.js';
+import { Entry } from '/opt/nodejs/Entry.js';
+import { saveEntry, getEntry, listEntries, deleteEntry } from '/opt/nodejs/s3Client.js';
+import { getUserId } from '/opt/nodejs/auth.js';
 ```
 
 ### Frontend (React)
 ```javascript
 import { Entry } from '../../../shared/models/Entry';
-// or
-import { Entry } from '../../../shared/models';
 ```
 
 ---
@@ -48,9 +47,9 @@ console.log(entry.title); // 'My Thoughts'
 
 ```javascript
 // In create.js
-import { Entry } from '/opt/nodejs/index.js';
-import { saveEntry } from '/opt/nodejs/index.js';
-import { getUserId } from '/opt/nodejs/index.js';
+import { Entry } from '/opt/nodejs/Entry.js';
+import { saveEntry } from '/opt/nodejs/s3Client.js';
+import { getUserId } from '/opt/nodejs/auth.js';
 
 export const handler = async (event) => {
   const userId = getUserId(event);
@@ -89,24 +88,28 @@ export const handler = async (event) => {
 ### Loading from S3
 
 ```javascript
-// In list.js - from S3 list response
-import { Entry } from '/opt/nodejs/index.js';
+// In list.js - uses listEntries from s3Client
+import { listEntries } from '/opt/nodejs/s3Client.js';
+import { getUserId } from '/opt/nodejs/auth.js';
 
-const s3Objects = await listS3Objects(userId);
-const entries = s3Objects.map(obj => Entry.fromS3Object(obj, userId));
+export const handler = async (event) => {
+  const userId = getUserId(event);
+  const entries = await listEntries(userId);
 
-// Sort by date descending
-entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-// Return metadata only (no content)
-return entries.map(e => e.toMetadata());
+  // Return metadata only (no content)
+  return {
+    statusCode: 200,
+    body: JSON.stringify(entries.map(e => e.toMetadata()))
+  };
+};
 ```
 
-### S3 Client Integration
+### S3 Client (Layer)
+
+The S3 client is in the Lambda layer at `backend/src/layers/common/s3Client.js`:
 
 ```javascript
-// Updated s3Client.js - now accepts Entry instances
-import { Entry } from '../../../../../shared/models/Entry.js';
+import { Entry } from './Entry.js';
 
 export async function saveEntry(entry) {
   const key = `users/${entry.userId}/${entry.id}.md`;

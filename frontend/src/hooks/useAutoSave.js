@@ -27,11 +27,12 @@ export function useAutoSave(content, saveFunction, delay = 5000) {
 	}, []);
 
 	useEffect(() => {
-		console.log("[DEBUG] useEffect: useAutoSave content change", { 
-			contentLength: content?.length, 
-			previousLength: previousContent.current?.length,
-			delay 
-		});
+		// Logging every keypress is overkill
+		// console.log("[DEBUG] useEffect: useAutoSave content change", {
+		// 	contentLength: content?.length,
+		// 	previousLength: previousContent.current?.length,
+		// 	delay
+		// });
 		// Clear existing timeout
 		if (timeoutRef.current) {
 			clearTimeout(timeoutRef.current);
@@ -50,6 +51,7 @@ export function useAutoSave(content, saveFunction, delay = 5000) {
 			if (!isMounted.current) return;
 
 			setStatus('saving');
+			console.log("[DEBUG] Auto-save triggered - saving content");
 			try {
 				await saveFunction(content);
 				if (isMounted.current) {
