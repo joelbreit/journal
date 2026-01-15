@@ -3,8 +3,8 @@
  * List all entries for the authenticated user (metadata only)
  */
 
-import { listEntries } from '../../layers/common/s3Client.js';
-import { getUserId } from '../../layers/common/auth.js';
+import { listEntries } from '/opt/nodejs/s3Client.js';
+import { getUserId } from '/opt/nodejs/auth.js';
 
 export const handler = async (event) => {
   console.log('List entries event:', JSON.stringify(event, null, 2));

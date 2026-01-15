@@ -3,8 +3,8 @@
  * Delete an entry
  */
 
-import { getEntry, deleteEntry } from '../../layers/common/s3Client.js';
-import { getUserId } from '../../layers/common/auth.js';
+import { getEntry, deleteEntry } from '/opt/nodejs/s3Client.js';
+import { getUserId } from '/opt/nodejs/auth.js';
 
 export const handler = async (event) => {
   console.log('Delete entry event:', JSON.stringify(event, null, 2));

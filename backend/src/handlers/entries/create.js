@@ -3,9 +3,9 @@
  * Create a new journal entry
  */
 
-import { Entry } from '../../../../../shared/models/Entry.js';
-import { saveEntry } from '../../layers/common/s3Client.js';
-import { getUserId } from '../../layers/common/auth.js';
+import { Entry } from '/opt/nodejs/Entry.js';
+import { saveEntry } from '/opt/nodejs/s3Client.js';
+import { getUserId } from '/opt/nodejs/auth.js';
 
 export const handler = async (event) => {
   console.log('Create entry event:', JSON.stringify(event, null, 2));
