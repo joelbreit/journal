@@ -10,14 +10,14 @@
  * @returns {string} User ID (sub claim from Cognito JWT)
  */
 function getUserId(event) {
-  // TODO: Extract user ID from Cognito authorizer claims
-  // event.requestContext.authorizer.claims.sub
+	// TODO: Extract user ID from Cognito authorizer claims
+	// event.requestContext.authorizer.claims.sub
 
-  if (!event.requestContext?.authorizer?.claims?.sub) {
-    throw new Error('Unauthorized: No user ID found in request');
-  }
+	if (!event.requestContext?.authorizer?.claims?.sub) {
+		throw new Error('Unauthorized: No user ID found in request');
+	}
 
-  return event.requestContext.authorizer.claims.sub;
+	return event.requestContext.authorizer.claims.sub;
 }
 
 /**
@@ -26,10 +26,10 @@ function getUserId(event) {
  * @returns {string} User email
  */
 function getUserEmail(event) {
-  // TODO: Extract email from Cognito authorizer claims
-  // event.requestContext.authorizer.claims.email
+	// TODO: Extract email from Cognito authorizer claims
+	// event.requestContext.authorizer.claims.email
 
-  return event.requestContext?.authorizer?.claims?.email || null;
+	return event.requestContext?.authorizer?.claims?.email || null;
 }
 
 /**
@@ -38,14 +38,14 @@ function getUserEmail(event) {
  * @returns {object} All Cognito claims
  */
 function getUserClaims(event) {
-  // TODO: Return all claims
-  // event.requestContext.authorizer.claims
+	// TODO: Return all claims
+	// event.requestContext.authorizer.claims
 
-  return event.requestContext?.authorizer?.claims || {};
+	return event.requestContext?.authorizer?.claims || {};
 }
 
 export {
-  getUserId,
-  getUserEmail,
-  getUserClaims,
+	getUserId,
+	getUserEmail,
+	getUserClaims,
 };

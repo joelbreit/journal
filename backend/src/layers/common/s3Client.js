@@ -15,21 +15,21 @@ const BUCKET_NAME = process.env.BUCKET_NAME;
  * @returns {Promise<object>} S3 response
  */
 async function saveEntry(entry) {
-  if (!entry.userId || !entry.id) {
-    throw new Error('Entry must have userId and id');
-  }
+	if (!entry.userId || !entry.id) {
+		throw new Error('Entry must have userId and id');
+	}
 
-  const key = `users/${entry.userId}/${entry.id}.md`;
+	const key = `users/${entry.userId}/${entry.id}.md`;
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    Body: entry.content,
-    ContentType: 'text/markdown',
-    Metadata: entry.toS3Metadata()
-  });
+	const command = new PutObjectCommand({
+		Bucket: BUCKET_NAME,
+		Key: key,
+		Body: entry.content,
+		ContentType: 'text/markdown',
+		Metadata: entry.toS3Metadata()
+	});
 
-  return await s3Client.send(command);
+	return await s3Client.send(command);
 }
 
 /**
@@ -39,21 +39,21 @@ async function saveEntry(entry) {
  * @returns {Promise<Entry>} Entry instance with content
  */
 async function getEntry(userId, entryId) {
-  const key = `users/${userId}/${entryId}.md`;
+	const key = `users/${userId}/${entryId}.md`;
 
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key
-  });
+	const command = new GetObjectCommand({
+		Bucket: BUCKET_NAME,
+		Key: key
+	});
 
-  const response = await s3Client.send(command);
-  const content = await response.Body.transformToString();
+	const response = await s3Client.send(command);
+	const content = await response.Body.transformToString();
 
-  return Entry.fromS3WithContent(
-    { ...response, Body: content },
-    userId,
-    entryId
-  );
+	return Entry.fromS3WithContent(
+		{ ...response, Body: content },
+		userId,
+		entryId
+	);
 }
 
 /**
@@ -62,24 +62,24 @@ async function getEntry(userId, entryId) {
  * @returns {Promise<Array<Entry>>} Array of Entry instances (metadata only)
  */
 async function listEntries(userId) {
-  const command = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME,
-    Prefix: `users/${userId}/`
-  });
+	const command = new ListObjectsV2Command({
+		Bucket: BUCKET_NAME,
+		Prefix: `users/${userId}/`
+	});
 
-  const response = await s3Client.send(command);
+	const response = await s3Client.send(command);
 
-  if (!response.Contents || response.Contents.length === 0) {
-    return [];
-  }
+	if (!response.Contents || response.Contents.length === 0) {
+		return [];
+	}
 
-  // Convert S3 objects to Entry instances
-  const entries = response.Contents.map(obj => Entry.fromS3Object(obj, userId));
+	// Convert S3 objects to Entry instances
+	const entries = response.Contents.map(obj => Entry.fromS3Object(obj, userId));
 
-  // Sort by date descending (newest first)
-  entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+	// Sort by date descending (newest first)
+	entries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  return entries;
+	return entries;
 }
 
 /**
@@ -89,19 +89,19 @@ async function listEntries(userId) {
  * @returns {Promise<object>} S3 response
  */
 async function deleteEntry(userId, entryId) {
-  const key = `users/${userId}/${entryId}.md`;
+	const key = `users/${userId}/${entryId}.md`;
 
-  const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key
-  });
+	const command = new DeleteObjectCommand({
+		Bucket: BUCKET_NAME,
+		Key: key
+	});
 
-  return await s3Client.send(command);
+	return await s3Client.send(command);
 }
 
 export {
-  saveEntry,
-  getEntry,
-  listEntries,
-  deleteEntry,
+	saveEntry,
+	getEntry,
+	listEntries,
+	deleteEntry,
 };
