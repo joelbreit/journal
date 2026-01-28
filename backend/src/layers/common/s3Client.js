@@ -3,7 +3,7 @@
  * Handles all S3 operations for storing and retrieving journal entries
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { Entry } from './Entry.js';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
@@ -73,8 +73,26 @@ async function listEntries(userId) {
 		return [];
 	}
 
-	// Convert S3 objects to Entry instances
-	const entries = response.Contents.map(obj => Entry.fromS3Object(obj, userId));
+	// Fetch metadata for each entry using HeadObjectCommand
+	// (ListObjectsV2Command doesn't return custom metadata)
+	const entryPromises = response.Contents.map(async (obj) => {
+		const headCommand = new HeadObjectCommand({
+			Bucket: BUCKET_NAME,
+			Key: obj.Key
+		});
+		
+		const headResponse = await s3Client.send(headCommand);
+		
+		// Extract entryId from S3 key: "users/{userId}/{entryId}.md"
+		const entryId = obj.Key.split('/').pop().replace('.md', '');
+		
+		return Entry.fromS3Object(
+			{ ...obj, Metadata: headResponse.Metadata },
+			userId
+		);
+	});
+
+	const entries = await Promise.all(entryPromises);
 
 	// Sort by date descending (newest first)
 	entries.sort((a, b) => new Date(b.date) - new Date(a.date));
